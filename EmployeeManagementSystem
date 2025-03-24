@@ -1,0 +1,246 @@
+---------------------------------Model--------------------------------------
+package com.infobeans.Employee;
+
+public class Employee {
+
+	int id ;
+	String name ;
+	String department;
+	int age ;
+	public Employee(int id , String name, String department, int age )
+	{
+		this.id = id ;
+		this.name = name ;
+		this.department= department;
+		this.age = age;
+		
+	}
+	public int getId ()
+	{
+		return id ;
+	}
+	public int getAge ()
+	{
+		return age ;
+	}
+	public String getName()
+	{
+		return name ;
+	}
+	public String getdepartment ()
+	{
+		return department;
+	}
+	public void setId (int id)
+	{
+		this.id = id ;
+	}
+	public void setAge (int age)
+	{
+		this.age= age;
+	}
+	public void setName (String name)
+	{
+		this.name = name;
+	}
+	public void setdepartment( String department)
+	{
+		this.department = department;
+		}
+}
+-----------------------------------------Dao------------------------
+package com.infobeans.dao;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.infobeans.Employee.Employee;
+
+public class Employeedao {
+
+	private static  final String Url = "jdbc:mysql://localhost:3306/EmployeeManagementSystem?useSSL=false";
+	private static final String user = "root";
+	private static final String password = "root";
+	public  Connection getConnection () throws SQLException
+	{
+		return DriverManager.getConnection(Url , user, password);
+	}
+	// insert a employee in the database 
+	public void insertEmployee(Employee employee ) throws SQLException
+	{
+		String sql = "insert  into Employee (id , name , age , department ) values (?,?,?,?)";
+		try (Connection con = getConnection ())
+		{
+			PreparedStatement pst = con.prepareStatement(sql);
+			pst.setInt(1, employee.getId());
+			pst.setString (2, employee.getName());
+			pst.setInt (3, employee.getAge());
+			pst.setString (4, employee.getdepartment());	
+		int rowsaffected=	pst.executeUpdate ();
+		if (rowsaffected > 0)
+		{
+            System.out.println("Student added successfully.");
+
+		}
+		
+			
+			
+		}
+		
+	}
+	
+	// Retrieve a list of Employee 
+	
+	public List <Employee> getAllEmployee() throws SQLException 
+	{
+		List <Employee> employees = new ArrayList ();
+		String sql = " Select * from  employee ";
+		try ( Connection con2 = getConnection ())
+		{
+			Statement st = con2.createStatement ();
+			ResultSet rs = st.executeQuery(sql);
+			while (rs.next())
+			{
+				int id = rs.getInt("id");
+				String name = rs.getString("name");
+				int age = rs.getInt("age");
+				String department = rs.getString("department");
+				Employee employee = new Employee(id, name , department , age);
+				employees.add(employee	);
+				
+			}
+		}
+		
+		return  employees;
+		
+	}
+	
+	public 	Employee findbyId(int id ) throws SQLException
+	{
+		String sql = "Select * from employee where id = ?";
+		try ( Connection con3 = getConnection ())
+		{
+		PreparedStatement pst1= con3.prepareStatement(sql)	;
+		pst1.setInt(1, id);
+		ResultSet rs = pst1.executeQuery ();
+		if ( rs.next())
+		{
+			int Employeeid = rs.getInt ("id");
+			String name = rs.getString("name");
+			int age = rs.getInt("age");
+			String department = rs.getString("department");
+			return new Employee(Employeeid , name , department , age);
+			
+			
+		}
+		}
+		
+		return null;
+		
+	}
+}
+----------------------------------Service------------------------------
+package com.infobeans.Service;
+
+import java.sql.SQLException;
+import java.util.List;
+
+import com.infobeans.Employee.Employee;
+import com.infobeans.dao.Employeedao;
+
+public class ServiceEmployee {
+
+	private Employeedao employeedao;
+	public ServiceEmployee()
+	{
+		this.employeedao=new Employeedao();
+	}
+	public void addEmployee(Employee employee) throws SQLException
+	{
+		employeedao.insertEmployee(employee);
+	}
+	
+	public List <Employee>fetchAllEmployee() throws SQLException
+	{
+		return  employeedao.getAllEmployee();
+	}
+	public void FetchId(int id ) throws SQLException
+	{
+		Employee employee = employeedao.findbyId(id);
+		if (employee != null)
+		{
+			System.out.println ( " Employee found "+ employee.getId()+ " \n "+ employee.getName()+ "\n "+employee.getAge()+ "\n"+ employee.getdepartment());
+			
+		}
+		else
+		{
+			System.out.println ( " Employee not found");
+		}
+	}
+}
+--------------------------------------------Main-------------------------
+package com.infobeans.main;
+
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Scanner;
+
+import com.infobeans.Employee.Employee;
+import com.infobeans.Service.ServiceEmployee;
+
+public class Main {
+	public static void main ( String [] args) throws SQLException
+	{
+		Scanner scn = new Scanner ( System.in );
+		ServiceEmployee employeeservice= new ServiceEmployee();
+		while (true)
+		{
+			System.out.println ( " Enter 1 to add employee");
+			System.out.println ( " Enter 2 to fetch employee list");
+			System.out.println ( " Enter 3 to fetch employee  by id ");
+			System.out.println ( " Enter 4 for exiting.. ");
+
+
+			int choice = scn.nextInt ();
+			switch(choice)
+			{
+			case 1: System.out.println ( " Enter id ");
+			int id = scn.nextInt ();
+			scn.nextLine ();
+			System.out.println ( " Enter name ");
+			String name = scn.nextLine ();
+			System.out.println ( " Enter age ");
+			int age = scn.nextInt ();
+			scn.nextLine ();
+			System.out.println ( " Enter department");
+			String department = scn.nextLine ();
+			Employee employee= new Employee (id , name , department , age);
+			employeeservice.addEmployee(employee);
+			break;
+			case 2 : List<Employee>employees =  employeeservice.fetchAllEmployee();
+			System.out.println ( " Employee list");
+			for ( Employee e : employees)
+			{
+				System.out.println (e.getId()+ "\n"+e.getName()+ "\n"+e.getAge()+"\n"+e.getdepartment()+ "\n");
+			}
+			break;
+			case 3:
+				System.out.println ( " Enter id ");
+				int did = scn.nextInt ();
+				employeeservice.FetchId(did);
+				break;
+			case 4 :
+				System.out.println (" Existing...");
+				break;
+			}
+		}
+		
+	}
+
+}
